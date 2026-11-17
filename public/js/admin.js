@@ -1,0 +1,8 @@
+
+const $=id=>document.getElementById(id);async function api(url,body){const r=await fetch(url,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,credentials:'same-origin'});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||'请求失败');return j}
+async function refresh(){const d=await api('/api/admin/data');$('visits').textContent=d.stats.visits||0;$('calls').textContent=d.stats.apiCalls||0;$('tokens').textContent=Number(d.stats.tokens||0).toLocaleString();$('provider').value=d.config.provider||'DeepSeek';$('model').value=d.config.model||'';$('apiKey').placeholder=d.config.hasKey?'已配置（留空不会覆盖；重新输入可更换）':'尚未配置';$('announcement').value=d.announcement.text||'';}
+$('loginBtn').onclick=async()=>{try{await api('/api/admin/login',{password:$('password').value});$('login').classList.add('hidden');$('admin').classList.remove('hidden');await refresh()}catch(e){$('loginMsg').textContent=e.message}};
+$('saveConfig').onclick=async()=>{try{const key=$('apiKey').value;if(!key)throw Error('更换 API Key 时必须重新填写');await api('/api/admin/config',{provider:$('provider').value,model:$('model').value,apiKey:key});$('apiKey').value='';$('apiKey').placeholder='已配置';$('configState').textContent='已安全保存';}catch(e){$('configState').textContent=e.message}};
+$('saveAnnouncement').onclick=async()=>{try{await api('/api/admin/announcement',{text:$('announcement').value});alert('公告已发布')}catch(e){alert(e.message)}};$('refresh').onclick=()=>refresh().catch(e=>alert(e.message));$('logout').onclick=async()=>{await api('/api/admin/logout',{});location.reload()};
+api('/api/admin/data').then(()=>{$('login').classList.add('hidden');$('admin').classList.remove('hidden');return refresh()}).catch(()=>{});
+
